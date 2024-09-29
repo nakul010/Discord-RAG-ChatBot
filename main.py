@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 import json
 import discord
+import logging
+from keep_alive import keep_alive
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
@@ -15,6 +17,12 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # Load environment variables for API keys
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs.log"), logging.StreamHandler()],
+)
 
 # Constants
 EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
@@ -134,18 +142,40 @@ async def on_ready():
     rag_chain = setup_rag_chain()
 
 
-@bot.tree.command(name="ask", description="Ask a question from Stackup Helpdesk")
+@bot.tree.command(name="help", description="List all available commands")
+async def help_command(interaction: discord.Interaction):
+    help_text = (
+        "**Available Commands:**\n"
+        "`/ask <question>` - Ask a question about Satckup Helpdesk.\n"
+        "Use `!ask <your question here>` to interact with the bot."
+    )
+    await interaction.response.send_message(help_text)
+
+
+@bot.tree.command(name="ask", description="Ask a question about TestServer")
 @app_commands.describe(question="Question for the chatbot")
 async def ask(interaction: discord.Interaction, question: str):
-    # Acknowledge the interaction immediately
-    await interaction.response.defer(thinking=True)
+    try:
+        await interaction.response.defer(thinking=True)
 
-    if rag_chain:
-        answer = get_answer(question, rag_chain)
-        await interaction.followup.send(answer)
-    else:
+        if not question.strip():
+            await interaction.followup.send(
+                "Please ask a question after the command, e.g., `!ask your question here.`"
+            )
+            return
+
+        if rag_chain:
+            answer = get_answer(question, rag_chain)
+            await interaction.followup.send(answer)
+        else:
+            await interaction.followup.send(
+                "Sorry, I'm not ready to answer questions yet. Please try again later."
+            )
+
+    except Exception as e:
+        logging.error("Error in 'ask' command: %s", e)
         await interaction.followup.send(
-            "Sorry, I'm not ready to answer questions yet. Please try again later."
+            "An error occurred while processing your request. Please try again later."
         )
 
 
@@ -159,6 +189,8 @@ async def mark_ask(ctx, *, question: str = None):
             "Please ask a question after the command, e.g., `!ask <your question>`."
         )
 
+# Keeping bot alive
+keep_alive()
 
 # Run the bot
 bot.run(os.getenv("DISCORD_TOKEN"))

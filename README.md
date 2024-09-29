@@ -1,2 +1,1 @@
-"# Discord-RAG-ChatBot" 
-"# Discord-RAG-ChatBot" 
+# Discord-RAG-ChatBot

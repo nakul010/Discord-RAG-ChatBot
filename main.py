@@ -19,10 +19,11 @@ from langchain_core.prompts import ChatPromptTemplate
 load_dotenv()
 
 logging.basicConfig(
-    level=logging.ERROR,
+    filename="bot.log",
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("logs.log"), logging.StreamHandler()],
 )
+
 
 # Constants
 EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
@@ -131,6 +132,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
+    keep_alive()
+    logging.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     try:
         synced = await bot.tree.sync()
@@ -144,6 +147,7 @@ async def on_ready():
 
 @bot.tree.command(name="help", description="List all available commands")
 async def help_command(interaction: discord.Interaction):
+    logging.info(f"Help!!!! by {interaction.user.name}")
     help_text = (
         "**Available Commands:**\n"
         "`/ask <question>` - Ask a question about Satckup Helpdesk.\n"
@@ -155,6 +159,7 @@ async def help_command(interaction: discord.Interaction):
 @bot.tree.command(name="ask", description="Ask a question about TestServer")
 @app_commands.describe(question="Question for the chatbot")
 async def ask(interaction: discord.Interaction, question: str):
+    logging.info(f"Slash Question asked: {question} by {interaction.user.name}")
     try:
         await interaction.response.defer(thinking=True)
 
@@ -181,6 +186,7 @@ async def ask(interaction: discord.Interaction, question: str):
 
 @bot.command(name="ask", help="Mark your question for the helpdesk")
 async def mark_ask(ctx, *, question: str = None):
+    logging.info(f"Mark Question asked: {question}")
     if question:
         answer = get_answer(question, rag_chain)
         await ctx.reply(answer)
@@ -189,8 +195,6 @@ async def mark_ask(ctx, *, question: str = None):
             "Please ask a question after the command, e.g., `!ask <your question>`."
         )
 
-# Keeping bot alive
-keep_alive()
 
 # Run the bot
 bot.run(os.getenv("DISCORD_TOKEN"))

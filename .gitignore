@@ -1,5 +1,5 @@
 venv*
-.env*
+.env
 vectorstore/
 *.log
 __pycache__

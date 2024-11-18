@@ -1,8 +1,10 @@
 import os
-from pathlib import Path
 import json
 import discord
 import logging
+import calendar
+from pathlib import Path
+from datetime import datetime, timedelta
 from keep_alive import keep_alive
 from dotenv import load_dotenv
 from discord.ext import commands
@@ -28,6 +30,49 @@ logging.basicConfig(
 # Constants
 EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
 VECTORSTORE_DIR = "vectorstore"
+
+
+# Singapore public holidays (2024 and 2025) to consider
+HOLIDAYS = [
+    # 2024 holidays
+    datetime(2024, 10, 31),  # Deepavali
+    datetime(2024, 12, 25),  # Christmas Day
+    # 2025 holidays
+    datetime(2025, 1, 1),  # New Year's Day
+    datetime(2025, 1, 29),  # Chinese New Year
+    datetime(2025, 1, 30),  # Chinese New Year
+    datetime(2025, 3, 31),  # Hari Raya Puasa
+    datetime(2025, 4, 18),  # Good Friday
+    datetime(2025, 5, 1),  # Labour Day
+    datetime(2025, 5, 12),  # Vesak Day
+    datetime(2025, 6, 7),  # Hari Raya Haji
+    datetime(2025, 8, 9),  # National Day
+    datetime(2025, 10, 20),  # Deepavali (tentative)
+    datetime(2025, 12, 25),  # Christmas Day
+]
+
+
+def is_weekend(date: datetime):
+    """Check if the date is on a weekend (Saturday or Sunday)."""
+    return date.weekday() >= 5
+
+
+def is_holiday(date: datetime):
+    """Check if the date is a holiday."""
+    return date in HOLIDAYS
+
+
+def calculate_withdrawal_date(start_date: datetime, days_to_add: int):
+    """Calculate the expected withdrawal date considering weekends and public holidays."""
+    current_date = start_date
+    days_added = 0
+
+    while days_added < days_to_add:
+        current_date += timedelta(days=1)
+        if not is_weekend(current_date) and not is_holiday(current_date):
+            days_added += 1
+
+    return current_date
 
 
 def load_documents(file_path):
@@ -90,18 +135,17 @@ def setup_rag_chain():
         model="gemini-1.5-pro", temperature=0.3, max_tokens=500
     )
 
-    # Create a prompt template
     system_prompt = (
         "You are a helpdesk chatbot designed to provide support using relevant articles from the Stackup Help Center. Your role is to:\n"
-        "1. Provide solutions by retrieving and referencing information from the knowledge base articles."
-        "2. Answer queries based on factual and relevant content from these articles."
-        "3. Guide users through step-by-step troubleshooting and reference related articles."
-        "4. Maintain accuracy and avoid hallucinations—only respond with information found in the articles provided."
-        "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone."
-        "6. If unsure, escalate the query by suggesting the user seeks further help from servers's moderator if an article does not cover their issue."
-        "7. And for ticket creating link use 'Create Ticket here' markdown"
-        "8. Be Grammatically correct"
-        "\n\n"
+        "1. Provide solutions by retrieving and referencing information from the knowledge base articles.\n"
+        "2. Answer queries based on factual and relevant content from these articles.\n"
+        "3. Guide users through step-by-step troubleshooting and reference related articles.\n"
+        "4. Maintain accuracy and avoid hallucinations—only respond with information found in the articles provided.\n"
+        "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
+        "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue.\n"
+        "7. Please format all links as [text](URL) without any additional attributes, you can create the text for the link on you own.\n"
+        "8. For any question related to estimation of date for witdrawal, you have just to answer that, please use  another command `/calculate_withdrawal`.\n"
+        "9. Be grammatically correct.\n\n"
         "{context}"
     )
     prompt = ChatPromptTemplate.from_messages(
@@ -147,31 +191,54 @@ async def on_ready():
 
 @bot.tree.command(name="help", description="List all available commands")
 async def help_command(interaction: discord.Interaction):
-    logging.info(f"Help!!!! by {interaction.user.name}")
-    help_text = (
-        "**Available Commands:**\n"
-        "`/ask <question>` - Ask a question about Satckup Helpdesk.\n"
-        "Use `!ask <your question here>` to interact with the bot."
+    logging.info(f"Help command by {interaction.user.name} in #{interaction.channel}")
+
+    file = discord.File("media/su-pfp.png", filename="su-pfp.png")
+    embeded = discord.Embed(
+        color=0xFF5D64,
+        title="Stackup Help Centre",
+        url="https://stackuphelpcentre.zendesk.com/hc/en-us",
     )
-    await interaction.response.send_message(help_text)
+    embeded.add_field(
+        name="/ask",
+        value="Get answers to your StackUp related questions.",
+        inline=False,
+    )
+    embeded.add_field(
+        name="/calculate_withdrawal",
+        value="Calculate the estimated date to receive your withdrawal",
+        inline=False,
+    )
+    embeded.add_field(name="/help", value="Help Command", inline=False)
+    embeded.set_thumbnail(url="attachment://su-pfp.png")
+
+    await interaction.response.send_message(file=file, embed=embeded)
 
 
-@bot.tree.command(name="ask", description="Ask a question about TestServer")
-@app_commands.describe(question="Question for the chatbot")
+@bot.tree.command(
+    name="ask", description="Get answers to your StackUp related questions"
+)
+@app_commands.describe(
+    question="Bot is currently in development, response accuracy may vary as enhancements are being made"
+)
 async def ask(interaction: discord.Interaction, question: str):
-    logging.info(f"Slash Question asked: {question} by {interaction.user.name}")
+    logging.info(
+        f"Question asked: {question} by {interaction.user.name} in #{interaction.channel}"
+    )
     try:
         await interaction.response.defer(thinking=True)
 
         if not question.strip():
             await interaction.followup.send(
-                "Please ask a question after the command, e.g., `!ask your question here.`"
+                "Please ask a question after the command, e.g., `/ask your question here.`"
             )
             return
 
         if rag_chain:
             answer = get_answer(question, rag_chain)
-            await interaction.followup.send(answer)
+            await interaction.followup.send(
+                answer
+            )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
         else:
             await interaction.followup.send(
                 "Sorry, I'm not ready to answer questions yet. Please try again later."
@@ -184,15 +251,50 @@ async def ask(interaction: discord.Interaction, question: str):
         )
 
 
-@bot.command(name="ask", help="Mark your question for the helpdesk")
+@bot.command(name="ask", help="Ask a question about Stackup HelpDesk")
 async def mark_ask(ctx, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
     if question:
         answer = get_answer(question, rag_chain)
-        await ctx.reply(answer)
+        await ctx.reply(
+            answer
+        )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
     else:
         await ctx.reply(
             "Please ask a question after the command, e.g., `!ask <your question>`."
+        )
+
+
+# Add the new command for calculating the withdrawal date
+@bot.tree.command(
+    name="calculate_withdrawal", description="Calculate the estimated withdrawal date"
+)
+@app_commands.describe(
+    withdrawal_date="Date of withdrawal. Please use DD-MM-YYYY format.",
+)
+async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date: str):
+    logging.info(
+        f"Withdrawal date calculation request by {interaction.user.name} in #{interaction.channel}, Start Date: {withdrawal_date}"
+    )
+    processing_days = 7
+
+    try:
+        withdrawal_date_obj = datetime.strptime(withdrawal_date, "%d-%m-%Y")
+
+        estimated_date = calculate_withdrawal_date(withdrawal_date_obj, processing_days)
+
+        await interaction.response.send_message(
+            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays. Please note that delays may occur due to holidays, weekends, or unforeseen circumstances."
+        )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
+
+    except ValueError:
+        await interaction.response.send_message(
+            "Invalid date format. Please use DD-MM-YYYY format for the start date."
+        )
+    except Exception as e:
+        logging.error(f"Error in 'calculate_withdrawal' command: {e}")
+        await interaction.response.send_message(
+            "An error occurred while calculating the withdrawal date. Please try again later."
         )
 
 

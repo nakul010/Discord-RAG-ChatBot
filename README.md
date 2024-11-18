@@ -3,6 +3,7 @@
 A Discord bot that uses RAG (Retrieval Augmented Generation) to provide automated support by answering questions using content from the Help Desk's articles.
 
 ## Add to Your Server
+
 To add this bot to your Discord server, click [here](https://discord.com/oauth2/authorize?client_id=1289849397978333227&permissions=277293845568&integration_type=0&scope=bot+applications.commands)
 
 ## Features
@@ -16,12 +17,14 @@ To add this bot to your Discord server, click [here](https://discord.com/oauth2/
 ## Setting up
 
 1. Clone the repository:
+
 ```bash
 git clone https://github.com/nakul010/Discord-RAG-ChatBot.git
-cd stackup-helpdesk-bot
+cd Discord-RAG-ChatBot
 ```
 
 2. Install required packages:
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -39,24 +42,26 @@ PASSWORD = password  ### for viewing the logs
 ## Usage
 
 1. First, run the article fetching script to create the knowledge base:
+
 ```bash
 python eda-data.py
 ```
 
 2. Then start the Discord bot:
+
 ```bash
 python main.py
 ```
 
 ### Available Commands
 
-- `/ask <question>` - Ask a question (slash command)
-- `!ask <question>` - Ask a question (prefix command)
-- `/help` - List all available commands (slash command)
+- `/ask <question>` - Get answers to your StackUp related questions.
+- `/calculate_withdrawal <withdrawal_date>` - Calculate the estimated date to receive your withdrawal.
+- `/help` - Help command.
 
 ## How It Works
 
-1. **Data Preparation**: 
+1. **Data Preparation**:
    - Fetches articles from the Help Desk
    - Cleans HTML content and formats links to markdown
    - Saves processed articles to a text file

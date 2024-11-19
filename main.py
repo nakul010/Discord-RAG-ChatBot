@@ -140,11 +140,11 @@ def setup_rag_chain():
         "1. Provide solutions by retrieving and referencing information from the knowledge base articles.\n"
         "2. Answer queries based on factual and relevant content from these articles.\n"
         "3. Guide users through step-by-step troubleshooting and reference related articles.\n"
-        "4. Maintain accuracy and avoid hallucinations—only respond with information found in the articles provided.\n"
+        "4. Please ensure accuracy in your responses and avoid any assumptions. Only provide information that is explicitly mentioned in the articles provided.\n"
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
         "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue.\n"
         "7. Please format all links as [text](URL) without any additional attributes, you can create the text for the link on you own.\n"
-        "8. For any question related to estimation of date for witdrawal, you have just to answer that, please use  another command `/calculate_withdrawal`.\n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the `/calculate_withdrawal` command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
         "9. Be grammatically correct.\n\n"
         "{context}"
     )
@@ -284,7 +284,7 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
         estimated_date = calculate_withdrawal_date(withdrawal_date_obj, processing_days)
 
         await interaction.response.send_message(
-            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays. Please note that delays may occur due to holidays, weekends, or unforeseen circumstances."
+            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays."
         )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
 
     except ValueError:

@@ -1,6 +1,22 @@
 import random
 
 def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
+    """Picks lucky number(s) from a given range
+
+    Parameters:
+        range (str): Range of numbers to choose from. Provided in `x-y` format. Both numbers are included as possible winners.
+        count (int): Number of lucky winners. _Must be more than 1._
+        seed (int): Seed to initialse random. _Must not be `None`._
+        exclude (str): Comma-seperated list of numbers to exclude from the winners. Format: `x1,x2,x3,...`
+
+    Returns:
+        tuple: A tuple containing three values:
+            - error (str): Message of error faced.
+            - winners (list): List of strings of the winning numbers.
+            - seed_used (int): The seed used in the random picking.
+        If error, then `winners` and `seed_used` would be `None`.
+        Similarly, when `winners` and `seed_used`, then `error` would be `None`.
+    """
     assert seed is not None
     assert count >= 1
 
@@ -51,4 +67,5 @@ def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
     return None, winners, seed
 
 def get_random_seed() -> int:
+    """Randomly generate a number between 1 and 500 to be used as a seed."""
     return random.randint(1, 500)

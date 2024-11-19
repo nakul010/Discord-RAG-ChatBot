@@ -210,6 +210,11 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
+    embeded.add_field(
+        name="/lucky_winner",
+        value="Pick lucky winners randomly",
+        inline=False,
+    )
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 

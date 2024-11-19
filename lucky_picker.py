@@ -25,6 +25,8 @@ def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
     
     # Validate range
     range = range.split('-')
+    range = list(map(str.strip, range)) # clean up whitespace
+    range = [x for x in range if len(x) > 0] # drop empty string
     if len(range) != 2:
         return "Please provide range in format `x-y`.", None, None
     if range[0] == range[1]:

@@ -21,8 +21,8 @@ def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
     if exclude.strip():
         exclude = exclude.split(',')
         exclude = list(map(str.strip, exclude)) # clean up whitespace
-        if not all(map(str.isdigit, exclude)):
-            return "In exclude `x1,x2,x3,...`, all `x` must be digit.", None, None
+        exclude = [x for x in exclude if len(x) > 0] # drop empty string
+        exclude = [x for x in exclude if x.isdigit()] # drop non-digits
         exclude = list(set(exclude)) # get unique
         exclude = [int(x) for x in exclude] # cast to int
     else:

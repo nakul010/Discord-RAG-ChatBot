@@ -6,6 +6,7 @@ import calendar
 from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
+from lucky_picker import pick_lucky_winner, get_random_seed
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
@@ -295,6 +296,33 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
         logging.error(f"Error in 'calculate_withdrawal' command: {e}")
         await interaction.response.send_message(
             "An error occurred while calculating the withdrawal date. Please try again later."
+        )
+
+@bot.tree.command(
+        name="lucky_winner", description="Randomly pick lucky winner(s)"
+)
+@app_commands.describe(
+    range="Range of numbers to choose from. Provided as `1-10`. Both numbers are included as possible winners.",
+    count="Number of lucky winners. Defaults to 1 if not provided.",
+    seed="Seed for the randomizer. If not provided, a random will be generated.",
+    exclude="Number(s) to exclude from the pick. Provided as a list: `1,2,3`."
+)
+async def lucky_winner(interaction: discord.Interaction, range: str, count: int = 1, seed: int = None, exclude: str = ''):
+    if seed is None:
+        seed = get_random_seed()
+
+    error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
+
+    if error:
+        await interaction.response.send_message(f"{error}")
+    else:
+        logging.info(
+            f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+            f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} "
+            f"yields {count} winner(s): {winners}"
+        )
+        await interaction.response.send_message(
+            f"The lucky winners {"is" if len(winners) == 1 else "are"} {", ".join(winners)}.\n-# Seed used: {seed_used}"
         )
 
 

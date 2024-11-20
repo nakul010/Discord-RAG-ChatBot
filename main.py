@@ -51,6 +51,8 @@ HOLIDAYS = [
     datetime(2025, 12, 25),  # Christmas Day
 ]
 
+Stackup_Help_Centre = "https://stackuphelpcentre.zendesk.com/hc/en-us"
+
 
 def is_weekend(date: datetime):
     """Check if the date is on a weekend (Saturday or Sunday)."""
@@ -284,7 +286,7 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
         estimated_date = calculate_withdrawal_date(withdrawal_date_obj, processing_days)
 
         await interaction.response.send_message(
-            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays."
+            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays. If you need help, just go in here: {Stackup_Help_Centre}" "
         )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
 
     except ValueError:

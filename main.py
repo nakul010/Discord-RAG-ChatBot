@@ -212,7 +212,7 @@ async def help_command(interaction: discord.Interaction):
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
-    await interaction.response.send_message(file=file, embed=embeded)
+    await interaction.response.send_message(file=file, embed=embeded, delete_after=30)
 
 
 @bot.tree.command(
@@ -228,11 +228,11 @@ async def ask(interaction: discord.Interaction, question: str):
     try:
         await interaction.response.defer(thinking=True)
 
-        if not question.strip():
-            await interaction.followup.send(
-                "Please ask a question after the command, e.g., `/ask your question here.`"
-            )
-            return
+        # if not question.strip():
+        #     await interaction.followup.send(
+        #         "Please ask a question after the command, e.g., `/ask your question here.`"
+        #     )
+        #     return
 
         if rag_chain:
             answer = get_answer(question, rag_chain)
@@ -247,11 +247,12 @@ async def ask(interaction: discord.Interaction, question: str):
     except Exception as e:
         logging.error("Error in 'ask' command: %s", e)
         await interaction.followup.send(
-            "An error occurred while processing your request. Please try again later."
+            "An error occurred while processing your request. Please try again later.",
+            ephemeral=True,
         )
 
 
-@bot.command(name="ask", help="Ask a question about Stackup HelpDesk")
+@bot.command(name="ask", help="Get answers to your StackUp related questions")
 async def mark_ask(ctx, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
     if question:
@@ -289,12 +290,14 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
 
     except ValueError:
         await interaction.response.send_message(
-            "Invalid date format. Please use DD-MM-YYYY format for the start date."
+            "Invalid date format. Please use DD-MM-YYYY format for the start date.",
+            ephemeral=True,
         )
     except Exception as e:
         logging.error(f"Error in 'calculate_withdrawal' command: {e}")
         await interaction.response.send_message(
-            "An error occurred while calculating the withdrawal date. Please try again later."
+            "An error occurred while calculating the withdrawal date. Please try again later.",
+            ephemeral=True,
         )
 
 

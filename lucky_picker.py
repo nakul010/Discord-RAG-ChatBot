@@ -1,6 +1,7 @@
 import random
 
-def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
+
+def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
     """Picks lucky number(s) from a given range
 
     Parameters:
@@ -22,30 +23,30 @@ def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
 
     if not range.strip():
         return "Please provide a range.", None, None
-    
+
     # Validate range
-    range = range.split('-')
-    range = list(map(str.strip, range)) # clean up whitespace
-    range = [x for x in range if len(x) > 0] # drop empty string
+    range = range.split("-")
+    range = list(map(str.strip, range))  # clean up whitespace
+    range = [x for x in range if len(x) > 0]  # drop empty string
     if len(range) != 2:
         return "Please provide range in format `x-y`.", None, None
     if range[0] == range[1]:
         return "In range `x-y`, `x` and `y` cannot be the same.", None, None
     if not all(map(str.isdigit, range)):
         return "In range `x-y`, both `x` and `y` must be digits.", None, None
-    range = [int(x) for x in range] # cast to int
-    
+    range = [int(x) for x in range]  # cast to int
+
     # Validate exclude
     if exclude.strip():
-        exclude = exclude.split(',')
-        exclude = list(map(str.strip, exclude)) # clean up whitespace
-        exclude = [x for x in exclude if len(x) > 0] # drop empty string
-        exclude = [x for x in exclude if x.isdigit()] # drop non-digits
-        exclude = list(set(exclude)) # get unique
-        exclude = [int(x) for x in exclude] # cast to int
+        exclude = exclude.split(",")
+        exclude = list(map(str.strip, exclude))  # clean up whitespace
+        exclude = [x for x in exclude if len(x) > 0]  # drop empty string
+        exclude = [x for x in exclude if x.isdigit()]  # drop non-digits
+        exclude = list(set(exclude))  # get unique
+        exclude = [int(x) for x in exclude]  # cast to int
     else:
         exclude = []
-    
+
     start_range, end_range = min(range), max(range)
 
     # Validate count
@@ -65,8 +66,9 @@ def pick_lucky_winner(range: str, count: int, seed : int, exclude: str):
             winners.append(candidate)
 
     winners.sort()
-    winners = list(map(str, winners)) # cast to str
+    winners = list(map(str, winners))  # cast to str
     return None, winners, seed
+
 
 def get_random_seed() -> int:
     """Randomly generate a number between 1 and 500 to be used as a seed."""

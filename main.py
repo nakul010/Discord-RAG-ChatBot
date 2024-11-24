@@ -315,21 +315,34 @@ async def lucky_winner(
     seed: int = None,
     exclude: str = "",
 ):
-    if seed is None:
-        seed = get_random_seed()
+    valid_role_ids = [968790212140466206, 1062482414271737897]
+    has_role = any(
+        user_role.id in valid_role_ids for user_role in interaction.user.roles
+    )
 
-    error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
+    if has_role:
+        if seed is None:
+            seed = get_random_seed()
 
-    if error:
-        await interaction.response.send_message(f"{error}")
+        error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
+
+        if error:
+            await interaction.response.send_message(f"{error}")
+        else:
+            logging.info(
+                f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+                f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} "
+                f"yields {count} winner(s): {winners}"
+            )
+            await interaction.response.send_message(
+                f"The lucky {'winner is' if len(winners) == 1 else 'winners are'} {', '.join(winners)}."
+            )
     else:
         logging.info(
-            f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
-            f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} "
-            f"yields {count} winner(s): {winners}"
+            f"Unauthorized request of Lucky winner command by {interaction.user.name} in #{interaction.channel}"
         )
         await interaction.response.send_message(
-            f"The lucky {'winner is' if len(winners) == 1 else 'winners are'} {', '.join(winners)}."
+            "You don't have access to this command!", ephemeral=True
         )
 
 

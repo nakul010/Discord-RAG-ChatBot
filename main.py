@@ -327,6 +327,11 @@ async def lucky_winner(
         error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
 
         if error:
+            logging.info(
+                f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+                f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} for {count} winner(s) "
+                f"gives error: {error}"
+            )
             await interaction.response.send_message(f"{error}")
         else:
             logging.info(

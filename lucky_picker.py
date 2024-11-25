@@ -35,6 +35,8 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
         return "In range `x-y`, both `x` and `y` must be digits.", None, None
     range = [int(x) for x in range]  # cast to int
 
+    start_range, end_range = min(range), max(range)
+
     # Validate exclude
     if exclude.strip():
         exclude = exclude.split(",")
@@ -43,24 +45,23 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
         exclude = [x for x in exclude if x.isdigit()]  # drop non-digits
         exclude = list(set(exclude))  # get unique
         exclude = [int(x) for x in exclude]  # cast to int
+        exclude = [x for x in exclude if x >= start_range and x <= end_range]  # drop not-in-range
     else:
         exclude = []
-
-    start_range, end_range = min(range), max(range)
 
     # Validate count
     soft_limit = (end_range - start_range + 1) - len(exclude)
     count = min(soft_limit, count)
-    if count <= 0:
-        return "There's no winner to pick.", None, None
+    if soft_limit <= 0:
+        return "You have excluded everyone. Who do you want me to pick?", None, None
+    elif count <= 0:
+        return f"I can't pick {count} winner(s).", None, None
     elif count > 100:  # Sanity limit
         return "Really? That's a really big range. I'm not doing it >:(", None, None
 
     # Logic to select lucky winners
-
     winners = []
     random.seed(seed)
-
     while len(winners) != count:
         candidate = random.randint(start_range, end_range)
         if candidate not in exclude and candidate not in winners:

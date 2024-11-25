@@ -6,7 +6,7 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
 
     Parameters:
         range (str): Range of numbers to choose from. Provided in `x-y` format. Both numbers are included as possible winners.
-        count (int): Number of lucky winners. _Must be more than 1._
+        count (int): Number of lucky winners. Should be more than 1.
         seed (int): Seed to initialse random. _Must not be `None`._
         exclude (str): Comma-seperated list of numbers to exclude from the winners. Format: `x1,x2,x3,...`
 
@@ -19,7 +19,6 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
         Similarly, when `winners` and `seed_used`, then `error` would be `None`.
     """
     assert seed is not None
-    assert count >= 1
 
     if not range.strip():
         return "Please provide a range.", None, None
@@ -52,7 +51,9 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
     # Validate count
     soft_limit = (end_range - start_range + 1) - len(exclude)
     count = min(soft_limit, count)
-    if count > 100:  # Sanity limit
+    if count <= 0:
+        return "There's no winner to pick.", None, None
+    elif count > 100:  # Sanity limit
         return "Really? That's a really big range. I'm not doing it >:(", None, None
 
     # Logic to select lucky winners

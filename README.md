@@ -39,6 +39,9 @@ USERNAME = username  ### for viewing the logs
 PASSWORD = password  ### for viewing the logs
 ```
 
+> [!IMPORTANT]
+> Ensure your `DISCORD_TOKEN` has _Privileged Gateway Intents_
+
 ## Usage
 
 1. First, run the article fetching script to create the knowledge base:

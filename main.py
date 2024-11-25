@@ -6,6 +6,7 @@ import calendar
 from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
+from lucky_picker import pick_lucky_winner, get_random_seed
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
@@ -140,11 +141,11 @@ def setup_rag_chain():
         "1. Provide solutions by retrieving and referencing information from the knowledge base articles.\n"
         "2. Answer queries based on factual and relevant content from these articles.\n"
         "3. Guide users through step-by-step troubleshooting and reference related articles.\n"
-        "4. Maintain accuracy and avoid hallucinations—only respond with information found in the articles provided.\n"
+        "4. Please ensure accuracy in your responses and avoid any assumptions. Only provide information that is explicitly mentioned in the articles provided.\n"
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
         "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue.\n"
         "7. Please format all links as [text](URL) without any additional attributes, you can create the text for the link on you own.\n"
-        "8. For any question related to estimation of date for witdrawal, you have just to answer that, please use  another command `/calculate_withdrawal`.\n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the `/calculate_withdrawal` command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
         "9. Be grammatically correct.\n\n"
         "{context}"
     )
@@ -209,10 +210,15 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
+    embeded.add_field(
+        name="/lucky_winner",
+        value="Pick lucky winners randomly",
+        inline=False,
+    )
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
-    await interaction.response.send_message(file=file, embed=embeded)
+    await interaction.response.send_message(file=file, embed=embeded, delete_after=30)
 
 
 @bot.tree.command(
@@ -228,12 +234,6 @@ async def ask(interaction: discord.Interaction, question: str):
     try:
         await interaction.response.defer(thinking=True)
 
-        if not question.strip():
-            await interaction.followup.send(
-                "Please ask a question after the command, e.g., `/ask your question here.`"
-            )
-            return
-
         if rag_chain:
             answer = get_answer(question, rag_chain)
             await interaction.followup.send(
@@ -247,11 +247,12 @@ async def ask(interaction: discord.Interaction, question: str):
     except Exception as e:
         logging.error("Error in 'ask' command: %s", e)
         await interaction.followup.send(
-            "An error occurred while processing your request. Please try again later."
+            "An error occurred while processing your request. Please try again later.",
+            ephemeral=True,
         )
 
 
-@bot.command(name="ask", help="Ask a question about Stackup HelpDesk")
+@bot.command(name="ask", help="Get answers to your StackUp related questions")
 async def mark_ask(ctx, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
     if question:
@@ -284,17 +285,64 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
         estimated_date = calculate_withdrawal_date(withdrawal_date_obj, processing_days)
 
         await interaction.response.send_message(
-            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays. Please note that delays may occur due to holidays, weekends, or unforeseen circumstances."
+            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays."
         )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
 
     except ValueError:
         await interaction.response.send_message(
-            "Invalid date format. Please use DD-MM-YYYY format for the start date."
+            "Invalid date format. Please use DD-MM-YYYY format for the start date.",
+            ephemeral=True,
         )
     except Exception as e:
         logging.error(f"Error in 'calculate_withdrawal' command: {e}")
         await interaction.response.send_message(
-            "An error occurred while calculating the withdrawal date. Please try again later."
+            "An error occurred while calculating the withdrawal date. Please try again later.",
+            ephemeral=True,
+        )
+
+
+@bot.tree.command(name="lucky_winner", description="Randomly pick lucky winner(s)")
+@app_commands.describe(
+    range="Range of numbers to choose from. Provided as `1-10`. Both numbers are included as possible winners.",
+    count="Number of lucky winners. Defaults to 1 if not provided.",
+    seed="Seed for the randomizer. If not provided, a random will be generated.",
+    exclude="Number(s) to exclude from the pick. Provided as a list: `1,2,3`.",
+)
+async def lucky_winner(
+    interaction: discord.Interaction,
+    range: str,
+    count: int = 1,
+    seed: int = None,
+    exclude: str = "",
+):
+    valid_role_ids = [968790212140466206, 1062482414271737897]
+    has_role = any(
+        user_role.id in valid_role_ids for user_role in interaction.user.roles
+    )
+
+    if has_role:
+        if seed is None:
+            seed = get_random_seed()
+
+        error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
+
+        if error:
+            await interaction.response.send_message(f"{error}")
+        else:
+            logging.info(
+                f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+                f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} "
+                f"yields {count} winner(s): {winners}"
+            )
+            await interaction.response.send_message(
+                f"The lucky {'winner is' if len(winners) == 1 else 'winners are'} {', '.join(winners)}."
+            )
+    else:
+        logging.info(
+            f"Unauthorized request of Lucky winner command by {interaction.user.name} in #{interaction.channel}"
+        )
+        await interaction.response.send_message(
+            "You don't have access to this command!", ephemeral=True
         )
 
 

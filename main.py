@@ -3,7 +3,7 @@ import json
 import discord
 import logging
 import calendar
-import admin
+import auth_admin
 from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
@@ -316,7 +316,7 @@ async def lucky_winner(
     seed: int = None,
     exclude: str = "",
 ):
-    if admin.check_has_role(interaction.user):
+    if auth_admin.check_has_permissions(interaction):
         if seed is None:
             seed = get_random_seed()
 

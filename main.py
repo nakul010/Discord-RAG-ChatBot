@@ -33,6 +33,9 @@ EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
 VECTORSTORE_DIR = "vectorstore"
 
 
+valid_role_ids = [968790212140466206, 1062482414271737897]
+
+
 # Singapore public holidays (2024 and 2025) to consider
 HOLIDAYS = [
     # 2024 holidays
@@ -133,7 +136,7 @@ def setup_rag_chain():
 
     # Set up the language model for responses
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro", temperature=0.3, max_tokens=500
+        model="gemini-1.5-flash", temperature=0.3, max_tokens=500
     )
 
     system_prompt = (
@@ -210,11 +213,12 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
-    embeded.add_field(
-        name="/lucky_winner",
-        value="Pick lucky winners randomly",
-        inline=False,
-    )
+    if any(user_role.id in valid_role_ids for user_role in interaction.user.roles):
+        embeded.add_field(
+            name="/lucky_winner",
+            value="Pick lucky winners randomly",
+            inline=False,
+        )
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
@@ -315,7 +319,6 @@ async def lucky_winner(
     seed: int = None,
     exclude: str = "",
 ):
-    valid_role_ids = [968790212140466206, 1062482414271737897]
     has_role = any(
         user_role.id in valid_role_ids for user_role in interaction.user.roles
     )

@@ -134,7 +134,7 @@ def setup_rag_chain():
 
     # Set up the language model for responses
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro", temperature=0.3, max_tokens=500
+        model="gemini-1.5-flash", temperature=0.3, max_tokens=500
     )
 
     system_prompt = (
@@ -211,11 +211,12 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
-    embeded.add_field(
-        name="/lucky_winner",
-        value="Pick lucky winners randomly",
-        inline=False,
-    )
+    if auth_admin.check_has_permissions(interaction):
+        embeded.add_field(
+            name="/lucky_winner",
+            value="Pick lucky winners randomly",
+            inline=False,
+        )
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 

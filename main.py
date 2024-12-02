@@ -3,6 +3,7 @@ import json
 import discord
 import logging
 import calendar
+import auth_admin
 from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
@@ -31,9 +32,6 @@ logging.basicConfig(
 # Constants
 EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
 VECTORSTORE_DIR = "vectorstore"
-
-
-valid_role_ids = [968790212140466206, 1062482414271737897]
 
 
 # Singapore public holidays (2024 and 2025) to consider
@@ -213,7 +211,7 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
-    if any(user_role.id in valid_role_ids for user_role in interaction.user.roles):
+    if auth_admin.check_has_permissions(interaction):
         embeded.add_field(
             name="/lucky_winner",
             value="Pick lucky winners randomly",
@@ -319,17 +317,18 @@ async def lucky_winner(
     seed: int = None,
     exclude: str = "",
 ):
-    has_role = any(
-        user_role.id in valid_role_ids for user_role in interaction.user.roles
-    )
-
-    if has_role:
+    if auth_admin.check_has_permissions(interaction):
         if seed is None:
             seed = get_random_seed()
 
         error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
 
         if error:
+            logging.info(
+                f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+                f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} for {count} winner(s) "
+                f"gives error: {error}"
+            )
             await interaction.response.send_message(f"{error}")
         else:
             logging.info(

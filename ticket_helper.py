@@ -67,6 +67,7 @@ class StateMachine:
     start_state = None
     current_state = None
 
+
     """
     States:
     ├ start
@@ -105,6 +106,7 @@ class StateMachine:
 
         (branch_state
             .insert_branch_state("general_enquiry")
+
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
             .update_data("ticket-id", "9094359542041")
@@ -112,6 +114,7 @@ class StateMachine:
 
         (branch_state
             .insert_branch_state("account_related")
+
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
             .update_data("ticket-id", "10970588074137")
@@ -119,11 +122,15 @@ class StateMachine:
 
         (branch_state
             .insert_branch_state("withdrawal_related")
+
+            .insert_next_state("estimate_withdrawal")
+            .update_content("Have you checked your estimated withdrawal date using `/calculate_withdrawal`?")
+            .update_data("next-action", "Yes")
+
             .insert_next_state("check_processing_days")
-            .update_content(
-                "- Have you checked your estimated withdrawal date using `/calculate_withdrawal`?\n"
-                "- Is the estimated withdrawal date earlier than today?"
-            )
+            .update_content("Is the estimated withdrawal date earlier than today?")
+            .update_data("next-action", "Yes")
+
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
             .update_data("ticket-id", "11749552676121")
@@ -131,11 +138,11 @@ class StateMachine:
 
         (branch_state
             .insert_branch_state("platform_bug")
+
             .insert_next_state("suggest_discord")
-            .update_content(
-                "You can report in #bug-error-report. "
-                "Otherwise, proceed to open an official report."
-            )
+            .update_content("You can report in #bug-error-report.")
+            .update_data("next-action", "Open official report")
+
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
             .update_data("ticket-id", "11733831427737")
@@ -143,16 +150,19 @@ class StateMachine:
 
         (branch_state
             .insert_branch_state("submission_related")
-            .insert_next_state("suggest_discord")
-            .update_content(
-                "- Have you checked recent #re-review submission for similar issues reported?\n"
-                "- Have you discussed with other stackies in #re-review submission?"
-            )
+
+            .insert_next_state("suggest_discord_channel")
+            .update_content("Have you checked recent #re-review submission for similar issues reported?")
+            .update_data("next-action", "Yes")
+
+            .insert_next_state("suggest_discord_discussion")
+            . update_content("Have you discussed with other stackies in #re-review submission?")
+            .update_data("next-action", "Yes")
+
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
             .update_data("ticket-id", "11733869435673")
         )
-
 
 
     def prev_state(self):
@@ -164,6 +174,7 @@ class StateMachine:
         # Recursively go back prev state (if exist) if current_state has no content
         if self.current_state.has_prev() and self.current_state.content == "":
             self.prev_state()
+
 
     def next_state(self, branch = None):
         """move to next state"""
@@ -180,9 +191,11 @@ class StateMachine:
 
 class TicketHelper(discord.ui.View):
 
+
     state_machine: StateMachine = None
     embed = None
     content = ""
+
 
     def load_state_ui(self):
         state = self.state_machine.current_state
@@ -191,6 +204,7 @@ class TicketHelper(discord.ui.View):
         self.embed = start_ticket_embed if state.name == "start" else None
         self.clear_items()
 
+        # Show Issue Type Select
         if state.name == "issue_type":
             self.branch_select = discord.ui.Select(placeholder="Issue Type", options=
                     list(map(lambda x: discord.SelectOption(label=x), StateMachine.issue_type_options)))
@@ -200,11 +214,17 @@ class TicketHelper(discord.ui.View):
         else:
             self.branch_select = None
         
+        # Update next button label, if specified by state
+        is_specified = "next-action" in state.data
+        self.next_btn.label = state.data["next-action"] if is_specified else "Proceed"
+
+        # Show Previous/Proveed buttons
         if state.has_prev():
             self.add_item(self.back_btn)
         if state.has_next() and state.name != "issue_type":
             self.add_item(self.next_btn)
 
+        # Show Open Ticket button
         if state.name == "open_ticket":
             ticket_form_id = state.data["ticket-id"]
             self.link_btn.url = f"{base_url}?ticket_form_id={ticket_form_id}" if ticket_form_id else base_url

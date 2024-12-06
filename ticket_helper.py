@@ -113,20 +113,31 @@ class StateMachine:
         (branch_state
             .insert_branch_state("account_related")
             .insert_next_state("open_ticket")
+            .update_content("You should open a ticket.")
             .update_data("ticket-id", "10970588074137")
         )
 
         (branch_state
             .insert_branch_state("withdrawal_related")
             .insert_next_state("check_processing_days")
+            .update_content(
+                "- Have you checked your estimated withdrawal date using `/calculate_withdrawal`?\n"
+                "- Is the estimated withdrawal date earlier than today?"
+            )
             .insert_next_state("open_ticket")
+            .update_content("You should open a ticket.")
             .update_data("ticket-id", "11749552676121")
         )
 
         (branch_state
             .insert_branch_state("platform_bug")
             .insert_next_state("suggest_discord")
+            .update_content(
+                "You can report in #bug-error-report. "
+                "Otherwise, proceed to open an official report."
+            )
             .insert_next_state("open_ticket")
+            .update_content("You should open a ticket.")
             .update_data("ticket-id", "11733831427737")
         )
 
@@ -138,6 +149,7 @@ class StateMachine:
                 "- Have you discussed with other stackies in #re-review submission?"
             )
             .insert_next_state("open_ticket")
+            .update_content("You should open a ticket.")
             .update_data("ticket-id", "11733869435673")
         )
 

@@ -2,7 +2,9 @@ import discord
 
 
 base_url = "https://stackuphelpcentre.zendesk.com/hc/en-us/requests/new"
-
+command_calculate_withdrawal = "</calculate_withdrawal:???>" # not used because unknown command ID
+channel_bug_error_report = "<#968395739619278890>"
+channel_re_review_submission = "<#1067468094190129232>"
 
 start_ticket_embed = discord.Embed(
     title="Submit a request",
@@ -140,8 +142,8 @@ class StateMachine:
             .insert_branch_state("platform_bug")
 
             .insert_next_state("suggest_discord")
-            .update_content("You can report in #bug-error-report.")
-            .update_data("next-action", "Open official report")
+            .update_content(f"You can report in {channel_bug_error_report}.")
+            .update_data("next-action", "Submit official report")
 
             .insert_next_state("open_ticket")
             .update_content("You should open a ticket.")
@@ -152,11 +154,11 @@ class StateMachine:
             .insert_branch_state("submission_related")
 
             .insert_next_state("suggest_discord_channel")
-            .update_content("Have you checked recent #re-review submission for similar issues reported?")
+            .update_content(f"Have you checked recent {channel_re_review_submission} for similar issues reported?")
             .update_data("next-action", "Yes")
 
             .insert_next_state("suggest_discord_discussion")
-            . update_content("Have you discussed with other stackies in #re-review submission?")
+            . update_content(f"Have you discussed with other stackies in {channel_re_review_submission}?")
             .update_data("next-action", "Yes")
 
             .insert_next_state("open_ticket")

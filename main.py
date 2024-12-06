@@ -3,6 +3,7 @@ import json
 import discord
 import logging
 import calendar
+import auth_admin
 from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
@@ -134,7 +135,7 @@ def setup_rag_chain():
 
     # Set up the language model for responses
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-pro", temperature=0.3, max_tokens=500
+        model="gemini-1.5-flash", temperature=0.3, max_tokens=500
     )
 
     system_prompt = (
@@ -211,11 +212,12 @@ async def help_command(interaction: discord.Interaction):
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
-    embeded.add_field(
-        name="/lucky_winner",
-        value="Pick lucky winners randomly",
-        inline=False,
-    )
+    if auth_admin.check_has_permissions(interaction):
+        embeded.add_field(
+            name="/lucky_winner",
+            value="Pick lucky winners randomly",
+            inline=False,
+        )
     embeded.add_field(name="/help", value="Help Command", inline=False)
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
@@ -321,18 +323,18 @@ async def lucky_winner(
     seed: int = None,
     exclude: str = "",
 ):
-    valid_role_ids = [968790212140466206, 1062482414271737897]
-    has_role = any(
-        user_role.id in valid_role_ids for user_role in interaction.user.roles
-    )
-
-    if has_role:
+    if auth_admin.check_has_permissions(interaction):
         if seed is None:
             seed = get_random_seed()
 
         error, winners, seed_used = pick_lucky_winner(range, count, seed, exclude)
 
         if error:
+            logging.info(
+                f"Lucky winner request by {interaction.user.name} in #{interaction.channel}, "
+                f"for range {range} excluding {exclude if len(exclude) > 1 else None} using seed {seed} for {count} winner(s) "
+                f"gives error: {error}"
+            )
             await interaction.response.send_message(f"{error}")
         else:
             logging.info(

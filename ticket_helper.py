@@ -28,6 +28,14 @@ class State:
         self.next = new_state
         new_state.prev = self
         return new_state
+    
+
+    def insert_branch_state(self, state_name):
+        """insert and returns this state object"""
+        new_state = State(state_name)
+        self.branch[state_name] = new_state
+        new_state.prev = self
+        return new_state
 
 
     def update_content(self, content):
@@ -60,17 +68,22 @@ class StateMachine:
     current_state = None
 
     """
-    states = (
-        "start",
-        ("issue_type", (
-            ("general_enquiry", "open_ticket=9094359542041"),
-            ("account_related", "open_ticket=10970588074137"),
-            ("withdrawal_related", "check_processing_days", "open_ticket=11749552676121"),
-
-            ("platform_bug", "suggest_discord", "open_ticket=11733831427737"),
-            ("submission_related", "suggest_discord", "open_ticket=11733869435673")
-        )),
-    )
+    States:
+    ├ start
+    └ issue_type
+      ├ general_enquiry
+      | └ open_ticket = 9094359542041
+      ├ account_related
+      | └ open_ticket = 10970588074137
+      ├ withdrawal_related
+      | ├ check_processing_days
+      | └ open_ticket = 11749552676121
+      ├ platform_bug
+      | ├ suggest_discord
+      | └ open_ticket = 11733831427737
+      └ submission_related
+        ├ suggest_discord
+        └ open_ticket = 11733869435673
     """
 
 
@@ -87,38 +100,35 @@ class StateMachine:
         self.start_state = State("start")
         branch_state = self.start_state.insert_next_state("issue_type").update_content("Choose your issue type:")
 
-        state_1 = State("general_enquiry")
-        state_1.prev = branch_state
-        state_1.insert_next_state("open_ticket").update_data("ticket-id", "9094359542041")
-        branch_state.branch["general_enquiry"] = state_1
+        (branch_state
+            .insert_branch_state("general_enquiry")
+            .insert_next_state("open_ticket")
+            .update_content("You should open a ticket.")
+            .update_data("ticket-id", "9094359542041")
+        )
 
-        state_2 = State("account_related")
-        state_2.prev = branch_state
-        state_2.insert_next_state("open_ticket").update_data("ticket-id", "10970588074137")
-        branch_state.branch["account_related"] = state_2
+        (branch_state
+            .insert_branch_state("account_related")
+            .insert_next_state("open_ticket")
+            .update_data("ticket-id", "10970588074137")
+        )
 
-        state_3 = State("withdrawal_related")
-        state_3.prev = branch_state
-        state_3\
-            .insert_next_state("check_processing_days")\
-            .insert_next_state("open_ticket").update_data("ticket-id", "11749552676121")
-        branch_state.branch["withdrawal_related"] = state_3
+        (branch_state
+            .insert_branch_state("withdrawal_related")
+            .insert_next_state("check_processing_days")
+            .insert_next_state("open_ticket")
+            .update_data("ticket-id", "11749552676121")
+        )
 
-        state_4 = State("platform_bug")
-        state_4.prev = branch_state
-        (
-        state_4
+        (branch_state
+            .insert_branch_state("platform_bug")
             .insert_next_state("suggest_discord")
-            .update_content("content content")
             .insert_next_state("open_ticket")
             .update_data("ticket-id", "11733831427737")
         )
-        branch_state.branch["platform_bug"] = state_4
 
-        state_5 = State("submission_related").update_content("### Submission-Related Matters")
-        state_5.prev = branch_state
-        (
-        state_5
+        (branch_state
+            .insert_branch_state("submission_related")
             .insert_next_state("suggest_discord")
             .update_content(
                 "- Have you checked recent #re-review submission for similar issues reported?\n"
@@ -127,7 +137,6 @@ class StateMachine:
             .insert_next_state("open_ticket")
             .update_data("ticket-id", "11733869435673")
         )
-        branch_state.branch["submission_related"] = state_5
 
         self.current_state = self.start_state
 

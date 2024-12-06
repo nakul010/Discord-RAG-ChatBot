@@ -97,8 +97,11 @@ class StateMachine:
 
 
     def __init__(self):
-        self.start_state = State("start")
-        branch_state = self.start_state.insert_next_state("issue_type").update_content("Choose your issue type:")
+        self.current_state = self.start_state = State("start")
+
+        branch_state = (self.current_state
+                        .insert_next_state("issue_type")
+                        .update_content("Choose your issue type:"))
 
         (branch_state
             .insert_branch_state("general_enquiry")
@@ -138,16 +141,17 @@ class StateMachine:
             .update_data("ticket-id", "11733869435673")
         )
 
-        self.current_state = self.start_state
 
 
     def prev_state(self):
         """move to previous state"""
+
+        assert self.current_state.prev is not None
         self.current_state = self.current_state.prev
 
-        # Recursively go back prev state if current_state has no content
-        if self.current_state.content == "":
-                self.prev_state()
+        # Recursively go back prev state (if exist) if current_state has no content
+        if self.current_state.has_prev() and self.current_state.content == "":
+            self.prev_state()
 
     def next_state(self, branch = None):
         """move to next state"""

@@ -145,16 +145,21 @@ class StateMachine:
         """move to previous state"""
         self.current_state = self.current_state.prev
 
+        # Recursively go back prev state if current_state has no content
+        if self.current_state.content == "":
+                self.prev_state()
+
     def next_state(self, branch = None):
         """move to next state"""
 
-        if branch:
-            self.current_state = self.current_state.branch[branch]
-        else:
-            self.current_state = self.current_state.next
+        next_state = self.current_state.branch[branch] if branch else self.current_state.next
 
-        if self.current_state.content == "":
-            self.next_state()
+        if next_state:
+            self.current_state = next_state
+
+            # Recursively skip to next state (if exists) if current_state has no content
+            if self.current_state.next and self.current_state.content == "":
+                self.next_state()
 
 
 class TicketHelper(discord.ui.View):

@@ -192,12 +192,11 @@ class TicketHelper(discord.ui.View):
         self.clear_items()
 
         if state.name == "issue_type":
-            print('create')
             self.branch_select = discord.ui.Select(placeholder="Issue Type", options=
                     list(map(lambda x: discord.SelectOption(label=x), StateMachine.issue_type_options)))
             self.branch_select.callback = self.branch_next_state
             self.add_item(self.branch_select)
-            self.next_btn.disabled = True
+            # self.next_btn.disabled = True
         else:
             self.branch_select = None
         
@@ -210,10 +209,6 @@ class TicketHelper(discord.ui.View):
             ticket_form_id = state.data["ticket-id"]
             self.link_btn.url = f"{base_url}?ticket_form_id={ticket_form_id}" if ticket_form_id else base_url
             self.add_item(self.link_btn)
-
-        ############################## TESTING ##############################
-        #self.add_item(self.check_btn)
-        ############################## TESTING ##############################
 
 
     def __init__(self):
@@ -228,17 +223,6 @@ class TicketHelper(discord.ui.View):
         self.next_btn.callback = self.go_next_state
 
         self.link_btn = discord.ui.Button(label="Open Ticket",style=discord.ButtonStyle.link, row=4, url=base_url)
-
-        ############################## TESTING ##############################
-        # async def check_curr_state(interaction: discord.Interaction):
-        #    await interaction.response.edit_message(content=self.state_machine.current_state.name)
-            
-        # self.check_btn = discord.ui.Button(label="Check",style=discord.ButtonStyle.danger)
-        # self.check_btn.callback = check_curr_state
-
-
-        self.state_machine.next_state()
-        ############################## TESTING ##############################
 
         self.load_state_ui()
 
@@ -267,7 +251,7 @@ class TicketHelper(discord.ui.View):
         selected_issue_type = self.branch_select.values[0]
         select_branch_state = StateMachine.issue_type_options[selected_issue_type]
         
-        print(select_branch_state)
+        #print(select_branch_state)
         
         #"""
 

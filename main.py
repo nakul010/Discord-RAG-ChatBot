@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 from lucky_picker import pick_lucky_winner, get_random_seed
+from ticket_helper import TicketHelper, start_ticket_embed
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
@@ -301,6 +302,11 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
             "An error occurred while calculating the withdrawal date. Please try again later.",
             ephemeral=True,
         )
+
+
+@bot.tree.command(name="ticket", description="Open a new ticket")
+async def ticket(interaction: discord.Interaction):
+    await interaction.response.send_message(view=TicketHelper(), embed=start_ticket_embed, ephemeral=True)
 
 
 @bot.tree.command(name="lucky_winner", description="Randomly pick lucky winner(s)")

@@ -207,12 +207,18 @@ class TicketHelper(discord.ui.View):
         self.clear_items()
 
         # Show Issue Type Select
+        self.branch_next = None
         if state.name == "issue_type":
-            self.branch_select = discord.ui.Select(placeholder="Issue Type", options=
-                    list(map(lambda x: discord.SelectOption(label=x), StateMachine.issue_type_options)))
+            def mapper(key_value):
+                key, value = key_value
+                return discord.SelectOption(label=key, value=value)
+
+            self.branch_select = discord.ui.Select(placeholder="Issue Type",
+                    options=list(map(mapper, StateMachine.issue_type_options.items())))
             self.branch_select.callback = self.branch_next_state
             self.add_item(self.branch_select)
-            # self.next_btn.disabled = True
+
+            self.next_btn.disabled = True
         else:
             self.branch_select = None
         
@@ -223,7 +229,7 @@ class TicketHelper(discord.ui.View):
         # Show Previous/Proveed buttons
         if state.has_prev():
             self.add_item(self.back_btn)
-        if state.has_next() and state.name != "issue_type":
+        if state.has_next():
             self.add_item(self.next_btn)
 
         # Show Open Ticket button
@@ -260,7 +266,7 @@ class TicketHelper(discord.ui.View):
 
 
     async def go_next_state(self, interaction: discord.Interaction):
-        self.state_machine.next_state()
+        self.state_machine.next_state(self.branch_next)
         self.load_state_ui()
 
         await interaction.response.edit_message(
@@ -270,30 +276,16 @@ class TicketHelper(discord.ui.View):
     
 
     async def branch_next_state(self, interaction: discord.Interaction):
-        selected_issue_type = self.branch_select.values[0]
-        select_branch_state = StateMachine.issue_type_options[selected_issue_type]
-        
-        #print(select_branch_state)
-        
-        #"""
+        self.branch_next = self.branch_select.values[0]
 
-        self.state_machine.next_state(select_branch_state)
-        self.load_state_ui()
+        # Update selected option as default
+        for option in self.branch_select.options:
+            option.default = (option.value == self.branch_next)
+
+        # Enable next button
+        self.next_btn.disabled = False
 
         await interaction.response.edit_message(
             content=self.content,
             embed=self.embed,
             view=self)
-
-        """#
-        # FIXME: preferbly, selection option does not go next state immedtately,
-        #        but it enables the proceed button instead
-
-        self.next_btn.disabled = False
-        
-        await interaction.response.defer()
-
-        #"""
-
-
-        

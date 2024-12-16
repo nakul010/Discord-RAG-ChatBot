@@ -254,7 +254,7 @@ async def stop_tracking():
     users = [735548895878185001, 890986684580233216]
 
     for user in users:
-        user = await bot.fetch_user()
+        user = await bot.fetch_user(users)
         await user.send(
             "DAY 2: DECEMBER GRIND tracking has ended. Report will be generated in <#1092443920576807024>"
         )

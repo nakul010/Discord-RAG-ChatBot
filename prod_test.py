@@ -8,5 +8,5 @@ class Production(unittest.TestCase):
         self.assertFalse(GIVE_DEV_PERMISSIONS)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

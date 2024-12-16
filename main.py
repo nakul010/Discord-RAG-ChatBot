@@ -1,16 +1,15 @@
-import os
-import json
+import os, re, random, json, calendar, logging, asyncio
 import discord
-import logging
-import calendar
+import pytz
 import auth_admin
 from pathlib import Path
 from datetime import datetime, timedelta
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
 from keep_alive import keep_alive
-from lucky_picker import pick_lucky_winner, get_random_seed
-from ticket_helper import TicketHelper, start_ticket_embed
 from dotenv import load_dotenv
-from discord.ext import commands
+from discord.ext import tasks, commands
+from discord.ext.commands.context import Context
 from discord import app_commands
 from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -19,6 +18,9 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGener
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
+from lucky_picker import pick_lucky_winner, get_random_seed
+from ticket_helper import TicketHelper, start_ticket_embed
+from tracking import process_embeds, generate_report
 
 # Load environment variables for API keys
 load_dotenv()
@@ -34,6 +36,10 @@ logging.basicConfig(
 EMBEDDINGS_CONFIG_FILE = "embeddings_config.json"
 VECTORSTORE_DIR = "vectorstore"
 
+
+singapore_tz = pytz.timezone("Asia/Singapore")
+start_time = singapore_tz.localize(datetime(2024, 12, 17, 0, 0))
+end_time = start_time + timedelta(days=1)
 
 # Singapore public holidays (2024 and 2025) to consider
 HOLIDAYS = [
@@ -146,9 +152,13 @@ def setup_rag_chain():
         "4. Please ensure accuracy in your responses and avoid any assumptions. Only provide information that is explicitly mentioned in the articles provided.\n"
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
         "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue.\n"
-        "7. Please format all links as [text](URL) without any additional attributes, you can create the text for the link on you own.\n"
-        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the `/calculate_withdrawal` command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
+        "7. Please format all links as [text](URL) without any additional attributes, and create a descriptive text for each link.\n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the `</calculate_withdrawal:1305242443477815359>` command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
         "9. Be grammatically correct.\n\n"
+        "10. The articles are structured as follows: \n"
+        "  - Title: This is the title of the article.\n"
+        "  - URL: This is the URL to access the article online.\n"
+        "  - Body: This is the detailed content of the article, containing the full information, instructions, and related steps.\n"
         "{context}"
     )
     prompt = ChatPromptTemplate.from_messages(
@@ -176,20 +186,90 @@ intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+scheduler = AsyncIOScheduler()
+
 
 @bot.event
 async def on_ready():
-    keep_alive()
+    # keep_alive()
     logging.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     try:
         synced = await bot.tree.sync()
-        print(f"Synced {len(synced)} command(s)")
+        logging.info(f"Synced {len(synced)} command(s)")
     except Exception as e:
-        print(e)
-    print("------")
+        logging.info(e)
+    logging.info("------")
     global rag_chain
     rag_chain = setup_rag_chain()
+    scheduler.add_job(start_tracking, DateTrigger(run_date=start_time))
+    scheduler.add_job(stop_tracking, DateTrigger(run_date=end_time))
+    scheduler.start()
+
+
+@bot.event
+async def on_message(message: discord.Message):
+    current_time = datetime.now(singapore_tz)
+    if start_time < current_time < end_time:
+        if (
+            message.channel.id == 954580346945544302
+            and message.author.id == 950425192017039401
+        ):
+            logging.info(f"Processing message from {message.author} (ID: {message.id})")
+            await asyncio.sleep(2)
+            if message.embeds:
+                await process_embeds(message.embeds, message.id)
+            elif message.flags.value == 128:
+                logging.info("Message loading (flag 128). Attempting to fetch...")
+                try:
+                    full_message = await message.channel.fetch_message(message.id)
+                    if full_message.embeds:
+                        logging.info("Fetched embeds from suppressed message.")
+                        await process_embeds(full_message.embeds, message.id)
+                except discord.NotFound:
+                    logging.info("Message not found.")
+                except discord.Forbidden:
+                    logging.info("Permission denied when fetching the message.")
+                except Exception as e:
+                    logging.info(f"Unexpected error: {e}")
+            else:
+                logging.info(
+                    f"Embeds not found in {message.id} sent by {message.author}"
+                )
+
+
+async def start_tracking():
+    """Start tracking user activity."""
+    logging.info("DAY 2: DECEMBER GRIND tracking has started")
+    users = [735548895878185001, 890986684580233216]
+    for user in users:
+        user = await bot.fetch_user()
+        await user.send("DAY 2: DECEMBER GRIND tracking has started")
+
+
+async def stop_tracking():
+    """Stop tracking and generate a report."""
+    logging.info("DAY 2: DECEMBER GRIND tracking has ended")
+
+    users = [735548895878185001, 890986684580233216]
+
+    for user in users:
+        user = await bot.fetch_user()
+        await user.send(
+            "DAY 2: DECEMBER GRIND tracking has ended. Report will be generated in <#1092443920576807024>"
+        )
+
+    milestone_achieved_report, milestone_not_achieved_report = await generate_report()
+
+    coin_transfer_channel_id = 1092443920576807024
+    coin_transfer_channel = bot.get_channel(coin_transfer_channel_id)
+    if coin_transfer_channel:
+        await coin_transfer_channel.send(
+            f"\n# DAY 2: DECEMBER GRIND REPORT\n\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies who completed Day 2 milestone and getting extra and bonus stackcoin <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_achieved_report}```\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies getting extra stackcoins <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_not_achieved_report}```"
+        )
+        logging.info("Report sent to coin transfer channel.")
+    else:
+        logging.error("Coin transfer channel not found. Check the channel ID.")
 
 
 @bot.tree.command(name="help", description="List all available commands")
@@ -203,22 +283,24 @@ async def help_command(interaction: discord.Interaction):
         url="https://stackuphelpcentre.zendesk.com/hc/en-us",
     )
     embeded.add_field(
-        name="/ask",
+        name="</ask:1314299955997052950>",
         value="Get answers to your StackUp related questions.",
         inline=False,
     )
     embeded.add_field(
-        name="/calculate_withdrawal",
+        name="</calculate_withdrawal:1314299955997052951>",
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
     if auth_admin.check_has_permissions(interaction):
         embeded.add_field(
-            name="/lucky_winner",
+            name="</lucky_winner:1314299955997052952>",
             value="Pick lucky winners randomly",
             inline=False,
         )
-    embeded.add_field(name="/help", value="Help Command", inline=False)
+    embeded.add_field(
+        name="</help:1314299955997052949>", value="Help Command", inline=False
+    )
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
     await interaction.response.send_message(file=file, embed=embeded, delete_after=30)
@@ -256,7 +338,7 @@ async def ask(interaction: discord.Interaction, question: str):
 
 
 @bot.command(name="ask", help="Get answers to your StackUp related questions")
-async def mark_ask(ctx, *, question: str = None):
+async def mark_ask(ctx: Context, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
     if question:
         answer = get_answer(question, rag_chain)
@@ -306,7 +388,9 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
 
 @bot.tree.command(name="ticket", description="Open a new ticket")
 async def ticket(interaction: discord.Interaction):
-    await interaction.response.send_message(view=TicketHelper(), embed=start_ticket_embed, ephemeral=True)
+    await interaction.response.send_message(
+        view=TicketHelper(), embed=start_ticket_embed, ephemeral=True
+    )
 
 
 @bot.tree.command(name="lucky_winner", description="Randomly pick lucky winner(s)")

@@ -50,9 +50,9 @@ for article in articles:
     title = article.get("title", "Untitled")
     url = article.get("html_url", "No URL")
     cleaned_body = extract_and_clean_article(article)
-    # cleaned_articles.append(f"Title: {title}\nURL: {url}\nBody: {cleaned_body}\n")
     if cleaned_body:
-        cleaned_articles.append(f"{cleaned_body}\n")
+        cleaned_articles.append(f"Title: {title}\nURL: {url}\nBody: {cleaned_body}\n")
+        # cleaned_articles.append(f"{cleaned_body}\n")
 
 # Write cleaned articles to a text file
 with open("cleaned_data.txt", "w", encoding="utf-8") as output_file:

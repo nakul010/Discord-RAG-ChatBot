@@ -4,3 +4,4 @@ vectorstore/
 *.log
 __pycache__
 .vscode
+test*

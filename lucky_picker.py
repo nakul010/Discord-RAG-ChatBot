@@ -45,7 +45,9 @@ def pick_lucky_winner(range: str, count: int, seed: int, exclude: str):
         exclude = [x for x in exclude if x.isdigit()]  # drop non-digits
         exclude = list(set(exclude))  # get unique
         exclude = [int(x) for x in exclude]  # cast to int
-        exclude = [x for x in exclude if x >= start_range and x <= end_range]  # drop not-in-range
+        exclude = [
+            x for x in exclude if x >= start_range and x <= end_range
+        ]  # drop not-in-range
     else:
         exclude = []
 

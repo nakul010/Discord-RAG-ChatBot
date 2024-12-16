@@ -17,3 +17,4 @@ flask
 Flask-HTTPAuth
 supabase
 APScheduler
+pytz

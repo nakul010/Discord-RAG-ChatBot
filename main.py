@@ -202,74 +202,83 @@ async def on_ready():
     logging.info("------")
     global rag_chain
     rag_chain = setup_rag_chain()
-    scheduler.add_job(start_tracking, DateTrigger(run_date=start_time))
-    scheduler.add_job(stop_tracking, DateTrigger(run_date=end_time))
-    scheduler.start()
+#     scheduler.add_job(start_tracking, DateTrigger(run_date=start_time))
+#     scheduler.add_job(stop_tracking, DateTrigger(run_date=end_time))
+#     scheduler.start()
 
 
-@bot.event
-async def on_message(message: discord.Message):
-    current_time = datetime.now(singapore_tz)
-    if start_time < current_time < end_time:
-        if (
-            message.channel.id == 954580346945544302
-            and message.author.id == 950425192017039401
-        ):
-            logging.info(f"Processing message from {message.author} (ID: {message.id})")
-            await asyncio.sleep(2)
-            if message.embeds:
-                await process_embeds(message.embeds, message.id)
-            elif message.flags.value == 128:
-                logging.info("Message loading (flag 128). Attempting to fetch...")
-                try:
-                    full_message = await message.channel.fetch_message(message.id)
-                    if full_message.embeds:
-                        logging.info("Fetched embeds from suppressed message.")
-                        await process_embeds(full_message.embeds, message.id)
-                except discord.NotFound:
-                    logging.info("Message not found.")
-                except discord.Forbidden:
-                    logging.info("Permission denied when fetching the message.")
-                except Exception as e:
-                    logging.info(f"Unexpected error: {e}")
-            else:
-                logging.info(
-                    f"Embeds not found in {message.id} sent by {message.author}"
-                )
+# @bot.tree.command(name="stacking_report", description="DAY 2: DECEMBER GRIND REPORT")
+# async def stacking_report(interaction: discord.Interaction):
+#     milestone_achieved_report, milestone_not_achieved_report = await generate_report()
+#     await interaction.response.send_message(
+#         f"\n# DAY 2: DECEMBER GRIND REPORT\n\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies who completed Day 2 milestone and getting extra and bonus stackcoin <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_achieved_report}```\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies getting extra stackcoins <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_not_achieved_report}```"
+#     )
+#     logging.info("Report sent to coin transfer channel.")
 
 
-async def start_tracking():
-    """Start tracking user activity."""
-    logging.info("DAY 2: DECEMBER GRIND tracking has started")
-    users = [735548895878185001, 890986684580233216]
-    for user in users:
-        user = await bot.fetch_user()
-        await user.send("DAY 2: DECEMBER GRIND tracking has started")
+# @bot.event
+# async def on_message(message: discord.Message):
+#     current_time = datetime.now(singapore_tz)
+#     if start_time < current_time < end_time:
+#         if (
+#             message.channel.id == 954580346945544302
+#             and message.author.id == 950425192017039401
+#         ):
+#             logging.info(f"Processing message from {message.author} (ID: {message.id})")
+#             await asyncio.sleep(2)
+#             if message.embeds:
+#                 await process_embeds(message.embeds, message.id)
+#             elif message.flags.value == 128:
+#                 logging.info("Message loading (flag 128). Attempting to fetch...")
+#                 try:
+#                     full_message = await message.channel.fetch_message(message.id)
+#                     if full_message.embeds:
+#                         logging.info("Fetched embeds from suppressed message.")
+#                         await process_embeds(full_message.embeds, message.id)
+#                 except discord.NotFound:
+#                     logging.info("Message not found.")
+#                 except discord.Forbidden:
+#                     logging.info("Permission denied when fetching the message.")
+#                 except Exception as e:
+#                     logging.info(f"Unexpected error: {e}")
+#             else:
+#                 logging.info(
+#                     f"Embeds not found in {message.id} sent by {message.author}"
+#                 )
 
 
-async def stop_tracking():
-    """Stop tracking and generate a report."""
-    logging.info("DAY 2: DECEMBER GRIND tracking has ended")
+# async def start_tracking():
+#     """Start tracking user activity."""
+#     logging.info("DAY 2: DECEMBER GRIND tracking has started")
+#     users = [735548895878185001, 890986684580233216]
+#     for user in users:
+#         user = await bot.fetch_user(user)
+#         await user.send("DAY 2: DECEMBER GRIND tracking has started")
 
-    users = [735548895878185001, 890986684580233216]
 
-    for user in users:
-        user = await bot.fetch_user(user)
-        await user.send(
-            "DAY 2: DECEMBER GRIND tracking has ended. Report will be generated in <#1092443920576807024>"
-        )
+# async def stop_tracking():
+#     """Stop tracking and generate a report."""
+#     logging.info("DAY 2: DECEMBER GRIND tracking has ended")
 
-    milestone_achieved_report, milestone_not_achieved_report = await generate_report()
+#     users = [735548895878185001, 890986684580233216]
 
-    coin_transfer_channel_id = 1092443920576807024
-    coin_transfer_channel = bot.get_channel(coin_transfer_channel_id)
-    if coin_transfer_channel:
-        await coin_transfer_channel.send(
-            f"\n# DAY 2: DECEMBER GRIND REPORT\n\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies who completed Day 2 milestone and getting extra and bonus stackcoin <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_achieved_report}```\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies getting extra stackcoins <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_not_achieved_report}```"
-        )
-        logging.info("Report sent to coin transfer channel.")
-    else:
-        logging.error("Coin transfer channel not found. Check the channel ID.")
+#     for user in users:
+#         user = await bot.fetch_user(user)
+#         await user.send(
+#             "DAY 2: DECEMBER GRIND tracking has ended. Report will be generated in <#1092443920576807024>"
+#         )
+
+#     milestone_achieved_report, milestone_not_achieved_report = await generate_report()
+
+#     coin_transfer_channel_id = 1092443920576807024
+#     coin_transfer_channel = bot.get_channel(coin_transfer_channel_id)
+#     if coin_transfer_channel:
+#         await coin_transfer_channel.send(
+#             f"\n# DAY 2: DECEMBER GRIND REPORT\n\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies who completed Day 2 milestone and getting extra and bonus stackcoin <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_achieved_report}```\n### <:StackUp:935796086231171112> <:yaycoin:1076423261572837538> Stackies getting extra stackcoins <:yaycoin:1076423261572837538> <:StackUp:935796086231171112>\n```{milestone_not_achieved_report}```"
+#         )
+#         logging.info("Report sent to coin transfer channel.")
+#     else:
+#         logging.error("Coin transfer channel not found. Check the channel ID.")
 
 
 @bot.tree.command(name="help", description="List all available commands")
@@ -283,23 +292,23 @@ async def help_command(interaction: discord.Interaction):
         url="https://stackuphelpcentre.zendesk.com/hc/en-us",
     )
     embeded.add_field(
-        name="</ask:1314299955997052950>",
+        name="</ask:1318306059458187346>",
         value="Get answers to your StackUp related questions.",
         inline=False,
     )
     embeded.add_field(
-        name="</calculate_withdrawal:1314299955997052951>",
+        name="</calculate_withdrawal:1318306059458187347>",
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
     if auth_admin.check_has_permissions(interaction):
         embeded.add_field(
-            name="</lucky_winner:1314299955997052952>",
+            name="</lucky_winner:1318306059458187348>",
             value="Pick lucky winners randomly",
             inline=False,
         )
     embeded.add_field(
-        name="</help:1314299955997052949>", value="Help Command", inline=False
+        name="</help:1318306059458187345>", value="Help Command", inline=False
     )
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 

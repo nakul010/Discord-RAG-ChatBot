@@ -20,7 +20,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from lucky_picker import pick_lucky_winner, get_random_seed
 from ticket_helper import TicketHelper, start_ticket_embed
-from tracking import process_embeds, generate_report
+from work_tracking import embeds_processing, generate_report
 
 # Load environment variables for API keys
 load_dotenv()
@@ -40,6 +40,7 @@ VECTORSTORE_DIR = "vectorstore"
 singapore_tz = pytz.timezone("Asia/Singapore")
 start_time = singapore_tz.localize(datetime(2024, 12, 17, 0, 0))
 end_time = start_time + timedelta(days=1)
+new_year = singapore_tz.localize(datetime(2025, 1, 1, 0, 0))
 
 # Singapore public holidays (2024 and 2025) to consider
 HOLIDAYS = [
@@ -151,14 +152,14 @@ def setup_rag_chain():
         "3. Guide users through step-by-step troubleshooting and reference related articles.\n"
         "4. Please ensure accuracy in your responses and avoid any assumptions. Only provide information that is explicitly mentioned in the articles provided.\n"
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
-        "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue.\n"
+        "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue\n"
         "7. Please format all links as [text](URL) without any additional attributes, and create a descriptive text for each link.\n"
-        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the `</calculate_withdrawal:1305242443477815359>` command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
-        "9. Be grammatically correct.\n\n"
-        "10. The articles are structured as follows: \n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the </calculate_withdrawal:1318306059458187347> command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
+        "9. The articles are structured as follows: \n"
         "  - Title: This is the title of the article.\n"
         "  - URL: This is the URL to access the article online.\n"
         "  - Body: This is the detailed content of the article, containing the full information, instructions, and related steps.\n"
+        "10. Be grammatically correct.\n\n"
         "{context}"
     )
     prompt = ChatPromptTemplate.from_messages(
@@ -202,6 +203,8 @@ async def on_ready():
     logging.info("------")
     global rag_chain
     rag_chain = setup_rag_chain()
+
+
 #     scheduler.add_job(start_tracking, DateTrigger(run_date=start_time))
 #     scheduler.add_job(stop_tracking, DateTrigger(run_date=end_time))
 #     scheduler.start()
@@ -227,14 +230,14 @@ async def on_ready():
 #             logging.info(f"Processing message from {message.author} (ID: {message.id})")
 #             await asyncio.sleep(2)
 #             if message.embeds:
-#                 await process_embeds(message.embeds, message.id)
+#                 await embeds_processing(message.embeds, message.id)
 #             elif message.flags.value == 128:
 #                 logging.info("Message loading (flag 128). Attempting to fetch...")
 #                 try:
 #                     full_message = await message.channel.fetch_message(message.id)
 #                     if full_message.embeds:
 #                         logging.info("Fetched embeds from suppressed message.")
-#                         await process_embeds(full_message.embeds, message.id)
+#                         await embeds_processing(full_message.embeds, message.id)
 #                 except discord.NotFound:
 #                     logging.info("Message not found.")
 #                 except discord.Forbidden:
@@ -325,13 +328,19 @@ async def ask(interaction: discord.Interaction, question: str):
     logging.info(
         f"Question asked: {question} by {interaction.user.name} in #{interaction.channel}"
     )
+
+    holiday_note = ""
+    current_time = datetime.now(singapore_tz)
+    if current_time > new_year:
+        holiday_note = "\n-# Please note that Stackup team will observe the holidays on December 25th, 30th, 31st, and January 1st. During this time, responses may be delayed from team"
+
     try:
         await interaction.response.defer(thinking=True)
 
         if rag_chain:
             answer = get_answer(question, rag_chain)
             await interaction.followup.send(
-                answer
+                answer + holiday_note
             )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
         else:
             await interaction.followup.send(
@@ -349,10 +358,16 @@ async def ask(interaction: discord.Interaction, question: str):
 @bot.command(name="ask", help="Get answers to your StackUp related questions")
 async def mark_ask(ctx: Context, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
+
+    holiday_note = ""
+    current_time = datetime.now(singapore_tz)
+    if current_time > new_year:
+        holiday_note = "\n-# Please note that Stackup team will observe the holidays on December 25th, 30th, 31st, and January 1st. During this time, responses may be delayed from team"
+
     if question:
         answer = get_answer(question, rag_chain)
         await ctx.reply(
-            answer
+            answer + holiday_note
         )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
     else:
         await ctx.reply(
@@ -384,7 +399,7 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
 
     except ValueError:
         await interaction.response.send_message(
-            "Invalid date format. Please use DD-MM-YYYY format for the start date.",
+            "Invalid date format. Please use `DD-MM-YYYY` format for the start date.",
             ephemeral=True,
         )
     except Exception as e:

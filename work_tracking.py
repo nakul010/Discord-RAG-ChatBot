@@ -18,7 +18,7 @@ track = {}
 scheduler = AsyncIOScheduler()
 
 
-async def process_embeds(embeds: discord.Embed, message_id: int):
+async def embeds_processing(embeds: discord.Embed, message_id: int):
     """
     Process embeds to extract user activity.
     """

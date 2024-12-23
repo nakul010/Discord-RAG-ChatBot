@@ -2,9 +2,7 @@ import discord
 
 
 base_url = "https://stackuphelpcentre.zendesk.com/hc/en-us/requests/new"
-command_calculate_withdrawal = (
-    "</calculate_withdrawal:1314299955997052951>"  # not used because unknown command ID
-)
+command_calculate_withdrawal = "</calculate_withdrawal:1318306059458187347>"
 channel_bug_error_report = "<#968395739619278890>"
 channel_re_review_submission = "<#1067468094190129232>"
 

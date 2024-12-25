@@ -40,7 +40,9 @@ VECTORSTORE_DIR = "vectorstore"
 singapore_tz = pytz.timezone("Asia/Singapore")
 start_time = singapore_tz.localize(datetime(2024, 12, 17, 0, 0))
 end_time = start_time + timedelta(days=1)
-new_year = singapore_tz.localize(datetime(2025, 1, 1, 0, 0))
+
+team_holiday_end = singapore_tz.localize(datetime(2025, 1, 2, 0, 0))
+holiday_withdrawal_time_delay = datetime(2024, 12, 26, 10, 0)
 
 # Singapore public holidays (2024 and 2025) to consider
 HOLIDAYS = [
@@ -70,6 +72,17 @@ def is_weekend(date: datetime):
 def is_holiday(date: datetime):
     """Check if the date is a holiday."""
     return date in HOLIDAYS
+
+
+def is_team_on_holiday():
+    """Check wether team is on holiday"""
+    holiday_note = ""
+    current_time = datetime.now(singapore_tz)
+
+    if current_time < team_holiday_end:
+        holiday_note = "\n-# Please note that Stackup team will observe the holidays on December 25th, 30th, 31st, and January 1st. During this time, responses may be delayed from team"
+
+    return holiday_note
 
 
 def calculate_withdrawal_date(start_date: datetime, days_to_add: int):
@@ -154,7 +167,7 @@ def setup_rag_chain():
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
         "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue\n"
         "7. Please format all links as [text](URL) without any additional attributes, and create a descriptive text for each link.\n"
-        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the </calculate_withdrawal:1318306059458187347> command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the </calculate_withdrawal:1321343083690070019> (send thisas it no need of formating this command) command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
         "9. The articles are structured as follows: \n"
         "  - Title: This is the title of the article.\n"
         "  - URL: This is the URL to access the article online.\n"
@@ -192,15 +205,15 @@ scheduler = AsyncIOScheduler()
 
 @bot.event
 async def on_ready():
-    keep_alive()
+    # keep_alive()
     logging.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     try:
         synced = await bot.tree.sync()
-        logging.info(f"Synced {len(synced)} command(s)")
+        print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         logging.info(e)
-    logging.info("------")
+    print("------")
     global rag_chain
     rag_chain = setup_rag_chain()
 
@@ -295,23 +308,23 @@ async def help_command(interaction: discord.Interaction):
         url="https://stackuphelpcentre.zendesk.com/hc/en-us",
     )
     embeded.add_field(
-        name="</ask:1318306059458187346>",
+        name="</ask:1321343083690070018>",
         value="Get answers to your StackUp related questions.",
         inline=False,
     )
     embeded.add_field(
-        name="</calculate_withdrawal:1318306059458187347>",
+        name="</calculate_withdrawal:1321343083690070019>",
         value="Calculate the estimated date to receive your withdrawal",
         inline=False,
     )
     if auth_admin.check_has_permissions(interaction):
         embeded.add_field(
-            name="</lucky_winner:1318306059458187348>",
+            name="</lucky_winner:1321343083690070020>",
             value="Pick lucky winners randomly",
             inline=False,
         )
     embeded.add_field(
-        name="</help:1318306059458187345>", value="Help Command", inline=False
+        name="</help:1321343083690070016>", value="Help Command", inline=False
     )
     embeded.set_thumbnail(url="attachment://su-pfp.png")
 
@@ -329,19 +342,12 @@ async def ask(interaction: discord.Interaction, question: str):
         f"Question asked: {question} by {interaction.user.name} in #{interaction.channel}"
     )
 
-    holiday_note = ""
-    current_time = datetime.now(singapore_tz)
-    if current_time > new_year:
-        holiday_note = "\n-# Please note that Stackup team will observe the holidays on December 25th, 30th, 31st, and January 1st. During this time, responses may be delayed from team"
-
     try:
         await interaction.response.defer(thinking=True)
 
         if rag_chain:
             answer = get_answer(question, rag_chain)
-            await interaction.followup.send(
-                answer + holiday_note
-            )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
+            await interaction.followup.send(answer + is_team_on_holiday())
         else:
             await interaction.followup.send(
                 "Sorry, I'm not ready to answer questions yet. Please try again later."
@@ -359,16 +365,9 @@ async def ask(interaction: discord.Interaction, question: str):
 async def mark_ask(ctx: Context, *, question: str = None):
     logging.info(f"Mark Question asked: {question}")
 
-    holiday_note = ""
-    current_time = datetime.now(singapore_tz)
-    if current_time > new_year:
-        holiday_note = "\n-# Please note that Stackup team will observe the holidays on December 25th, 30th, 31st, and January 1st. During this time, responses may be delayed from team"
-
     if question:
         answer = get_answer(question, rag_chain)
-        await ctx.reply(
-            answer + holiday_note
-        )  # + "\n\n**Stackup Helper Bot is under development and might have discrepancies in responses**")
+        await ctx.reply(answer + is_team_on_holiday())
     else:
         await ctx.reply(
             "Please ask a question after the command, e.g., `!ask <your question>`."
@@ -386,15 +385,15 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
     logging.info(
         f"Withdrawal date calculation request by {interaction.user.name} in #{interaction.channel}, Start Date: {withdrawal_date}"
     )
-    processing_days = 7
-
     try:
+        disclaimer = "\n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays."
+        holiday_disclaimer = f"Withdrawals submitted after <t:{calendar.timegm(singapore_tz.localize(datetime(2024, 12, 26, 10, 0)).astimezone(pytz.utc).timetuple())}:f> will be processed and are expected to be received by January 3rd or January 6th 2025."
         withdrawal_date_obj = datetime.strptime(withdrawal_date, "%d-%m-%Y")
 
-        estimated_date = calculate_withdrawal_date(withdrawal_date_obj, processing_days)
+        estimated_date = calculate_withdrawal_date(withdrawal_date_obj, 7)
 
         await interaction.response.send_message(
-            f"The estimated withdrawal date is: {estimated_date.strftime('%d-%m-%Y')} \n-# Disclaimer: The estimated withdrawal time is based on a processing period of 7 business days, excluding weekends and public holidays."
+            f"{holiday_disclaimer if (datetime(2025, 1, 2, 0, 0) > withdrawal_date_obj > holiday_withdrawal_time_delay) else "The estimated withdrawal date is: " + estimated_date.strftime('%d-%m-%Y') + disclaimer}"
         )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
 
     except ValueError:

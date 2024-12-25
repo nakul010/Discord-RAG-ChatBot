@@ -1,4 +1,4 @@
-# Discord RAG ChatBot [![Discord Bot Status](https://badgen.infra.medigy.com/uptime-robot/status/ur2416038-6d3bb4f6ab214cff300f00ac)](https://stats.uptimerobot.com/mHvREacZr4)
+# Discord RAG ChatBot [![Discord Bot Status](https://img.shields.io/uptimerobot/status/m797755645-ffcd7b3cbdfe301d6aee7b6e)](https://stats.uptimerobot.com/mHvREacZr4)
 
 A Discord bot that uses RAG (Retrieval Augmented Generation) to provide automated support by answering questions using content from the Help Desk's articles.
 

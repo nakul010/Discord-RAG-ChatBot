@@ -205,7 +205,7 @@ scheduler = AsyncIOScheduler()
 
 @bot.event
 async def on_ready():
-    # keep_alive()
+    keep_alive()
     logging.info(f"Logged in as {bot.user} (ID: {bot.user.id})")
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
     try:
@@ -393,7 +393,7 @@ async def calculate_withdrawal(interaction: discord.Interaction, withdrawal_date
         estimated_date = calculate_withdrawal_date(withdrawal_date_obj, 7)
 
         await interaction.response.send_message(
-            f"{holiday_disclaimer if (datetime(2025, 1, 2, 0, 0) > withdrawal_date_obj > holiday_withdrawal_time_delay) else "The estimated withdrawal date is: " + estimated_date.strftime('%d-%m-%Y') + disclaimer}"
+            f"{holiday_disclaimer if (datetime(2025, 1, 2, 0, 0) > withdrawal_date_obj > holiday_withdrawal_time_delay) else ('The estimated withdrawal date is: ' + estimated_date.strftime('%d-%m-%Y') + disclaimer)}"
         )  # <t:{calendar.timegm(estimated_date.timetuple())}:D>"
 
     except ValueError:

@@ -49,6 +49,8 @@ HOLIDAYS = [
     # 2024 holidays
     datetime(2024, 10, 31),  # Deepavali
     datetime(2024, 12, 25),  # Christmas Day
+    datetime(2024, 12, 30),  # Team Holiday Day
+    datetime(2024, 12, 31),  # Team Holiday Day
     # 2025 holidays
     datetime(2025, 1, 1),  # New Year's Day
     datetime(2025, 1, 29),  # Chinese New Year
@@ -167,7 +169,7 @@ def setup_rag_chain():
         "5. Structure responses clearly by summarizing key points from articles, providing article links for more details, and using a helpful, professional tone.\n"
         "6. If unsure, suggest the user seeks further help from the server's moderator if an article does not cover their issue\n"
         "7. Please format all links as [text](URL) without any additional attributes, and create a descriptive text for each link.\n"
-        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the </calculate_withdrawal:1321343083690070019> (send thisas it no need of formating this command) command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
+        "8. If a user asks to calculate an estimated date for withdrawal, kindly inform them to use the </calculate_withdrawal:1321343083690070019> command. For all other inquiries related to withdrawal, respond in accordance with your usual process.\n"
         "9. The articles are structured as follows: \n"
         "  - Title: This is the title of the article.\n"
         "  - URL: This is the URL to access the article online.\n"

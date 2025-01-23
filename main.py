@@ -372,7 +372,7 @@ async def mark_ask(ctx: Context, *, question: str = None):
         await ctx.reply(answer + is_team_on_holiday())
     else:
         await ctx.reply(
-            "Please ask a question after the command, e.g., `!ask <your question>`."
+            "Please ask a question after the command, e.g., `!ask <your question>`.", delete_after=10, ephemeral=True
         )
 
 

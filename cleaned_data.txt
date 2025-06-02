@@ -215,7 +215,7 @@ Body: Users from these countries, whether residing in the region or citizens of 
 
 Title: 📕 StackUp's Payment Policy
 URL: https://stackuphelpcentre.zendesk.com/hc/en-us/articles/10826437832217--StackUp-s-Payment-Policy
-Body: StackUp allows players to withdraw their rewards, with the following conditions:  Players must be willing and able to accept rewards through at least one of our two payment methods. The minimum withdrawal amount is USD 10, and users can only withdraw their entire balance at once. There is a withdrawal fee to cover the transaction cost. You can expect to receive your withdrawal within 5 to 7 working days after submitting your request.  Please note that StackUp can only ensure that withdrawal requests are successfully sent to the provided payment details. Regrettably, we cannot guarantee any events that occur after a successful transaction.
+Body: StackUp allows players to withdraw their rewards, with the following conditions:  Players must be willing and able to accept rewards through at least one of our two payment methods. The minimum withdrawal amount is USD 3, and users can only withdraw their entire balance at once. There is a withdrawal fee to cover the transaction cost. You can expect to receive your withdrawal within 5 to 7 working days after submitting your request.  Please note that StackUp can only ensure that withdrawal requests are successfully sent to the provided payment details. Regrettably, we cannot guarantee any events that occur after a successful transaction.
 
 
 Title: How to participate in a Campaign or Quest?
@@ -345,7 +345,7 @@ Body: StackUp Quests require Stackies to follow a specific set of learning instr
 
 Title: Why can't I withdraw my reward balance?
 URL: https://stackuphelpcentre.zendesk.com/hc/en-us/articles/10842627430809-Why-can-t-I-withdraw-my-reward-balance
-Body: If you are unable to withdraw your reward balance, there are a few likely reasons for this.1. You haven't added any payment methods on StackUp yet.2. Your reward balance is below $10, which is below our current minimum withdrawal amount. 3. Your account is temporarily suspended. You should have received an email with more details about this. 4. Your account has been permanently suspended. You should have received an email with more details about this.  Related articles:   StackUp's Payment Methods  StackUp's Payment Policy  Platform Integrity Policy
+Body: If you are unable to withdraw your reward balance, there are a few likely reasons for this.1. You haven't added any payment methods on StackUp yet.2. Your reward balance is below $3, which is below our current minimum withdrawal amount. 3. Your account is temporarily suspended. You should have received an email with more details about this. 4. Your account has been permanently suspended. You should have received an email with more details about this.  Related articles:   StackUp's Payment Methods  StackUp's Payment Policy  Platform Integrity Policy
 
 
 Title: Why am I only approved even if I joined before reaching the max. no of participants?
